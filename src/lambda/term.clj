@@ -4,7 +4,7 @@
 
 (defn format
   ([term]
-   (format [] term))
+   (format () term))
   ([ctx term]
    (match
     term
@@ -12,13 +12,11 @@
     x
 
     [:fn _ arg arg-type body]
-    (let [arg-sym (gensym (name arg))
-          ctx (conj ctx arg-sym)]
-      (list 'fn [^arg-type arg-sym] (format ctx body)))
+    (let [ctx (cons arg ctx)]
+      (list 'fn [^arg-type arg] (format ctx body)))
 
     [:var _ id]
-    (str (try (nth ctx id)
-              (catch Exception _))
+    (str (nth ctx id)
          "(" id ")")
 
     [:call _ f arg]
