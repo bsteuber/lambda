@@ -9,10 +9,10 @@
    (match
     expr
 
-    (['fn [(arg :guard symbol?)]
+    (['fn [arg-type
+           (arg :guard symbol?)]
       body] :seq)
-    (let [arg-type (first (keys (meta arg)))
-          read-body (read (assoc ctx arg (inc depth))
+    (let [read-body (read (assoc ctx arg (inc depth))
                           (inc depth)
                           body)]
       [:fn nil arg arg-type read-body])

@@ -7,10 +7,10 @@
   (is (= 42
          (c/eval 42)))
   (is (= 1
-         (c/eval '((fn [x] x) 1))))
+         (c/eval '((fn [:int x] x) 1))))
   (is (= 2
-         (c/eval '(((fn [x]
-                       (fn [y]
+         (c/eval '(((fn [:int x]
+                       (fn [:int y]
                          x))
                     2)
                    42)))))

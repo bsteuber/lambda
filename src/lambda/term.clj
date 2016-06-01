@@ -13,11 +13,11 @@
 
     [:fn _ arg arg-type body]
     (let [ctx (cons arg ctx)]
-      (list 'fn [^arg-type arg] (format ctx body)))
-
+      (list 'fn [arg-type
+                 arg]
+            (format ctx body)))
     [:var _ id]
-    (str (nth ctx id)
-         "(" id ")")
+    (nth ctx id)
 
     [:call _ f arg]
     (list (format ctx f)
