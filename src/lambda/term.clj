@@ -11,10 +11,10 @@
     [:number _ x]
     x
 
-    [:fn _ arg body]
+    [:fn _ arg arg-type body]
     (let [arg-sym (gensym (name arg))
           ctx (conj ctx arg-sym)]
-      (list 'fn [arg-sym] (format ctx body)))
+      (list 'fn [^arg-type arg-sym] (format ctx body)))
 
     [:var _ id]
     (str (try (nth ctx id)
@@ -36,8 +36,8 @@
                         [:var info (+ delta id)]
                         term)
 
-                      [:fn info arg body]
-                      [:fn info arg (walk (inc depth) body)]
+                      [:fn info arg arg-type body]
+                      [:fn info arg arg-type (walk (inc depth) body)]
 
                       [:call info f arg]
                       [:call info (walk depth f) (walk depth arg)]))]
@@ -55,8 +55,8 @@
                           (shift depth replace-term)
                           term))
 
-                      [:fn info arg body]
-                      [:fn info arg (walk (inc depth) body)]
+                      [:fn info arg arg-type body]
+                      [:fn info arg arg-type (walk (inc depth) body)]
 
                       [:call info f arg]
                       [:call info (walk depth f) (walk depth arg)]))]

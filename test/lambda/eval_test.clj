@@ -6,5 +6,5 @@
 (deftest eval
   (is (= [:number nil 42]
          (e/eval nil [:call nil
-                    [:fn nil 'x [:var nil 0]]
+                    [:fn nil 'x :int [:var nil 0]]
                     [:number nil 42]]))))

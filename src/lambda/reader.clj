@@ -11,9 +11,11 @@
 
     (['fn [(arg :guard symbol?)]
       body] :seq)
-    [:fn nil arg (read (assoc ctx arg (inc depth))
-                       (inc depth)
-                       body)]
+    (let [arg-type (first (keys (meta arg)))
+          read-body (read (assoc ctx arg (inc depth))
+                          (inc depth)
+                          body)]
+      [:fn nil arg arg-type read-body])
 
     ([f arg] :seq)
     [:call nil

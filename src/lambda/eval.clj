@@ -7,7 +7,7 @@
   (let [val? (partial term/value? ctx)]
     (match
      term
-     [:call _ [:fn _ argname body] (arg :guard val?)]
+     [:call _ [:fn _ argname _ body] (arg :guard val?)]
      (term/substitute-top-var body arg)
 
      [:call info (v1 :guard val?) t2]
