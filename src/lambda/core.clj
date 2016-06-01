@@ -2,9 +2,12 @@
   (:refer-clojure :exclude [eval])
   (:require [lambda.eval   :as e]
             [lambda.term   :as t]
+            [lambda.type   :as ty]
             [lambda.reader :as r]))
 
-(def eval
-  (comp t/format
-        e/eval
-        r/read))
+(defn eval [expr]
+  (let [term (r/read expr)
+        type (ty/type-of term)
+        res (e/eval term)
+        formatted-res (t/format res)]
+    [type formatted-res]))
