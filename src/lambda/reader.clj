@@ -13,7 +13,7 @@
     expr
 
     (['if condition then else] :seq)
-    [:if nil
+    [:if
      (read ctx depth condition)
      (read ctx depth then)
      (read ctx depth else)]
@@ -25,21 +25,21 @@
     (let [read-body (read (assoc ctx arg (inc depth))
                           (inc depth)
                           body)]
-      [:fn nil arg arg-type read-body])
+      [:fn arg arg-type read-body])
 
     ([f arg] :seq)
-    [:call nil
+    [:call
      (read ctx depth f)
      (read ctx depth arg)]
 
     (sym :guard symbol?)
-    [:var nil (or (- depth (ctx sym))
+    [:var (or (- depth (ctx sym))
                   (throw (ex-info "Var not found"
                                   {:context ctx
                                    :var sym})))]
 
     (x :guard number?)
-    [:number nil x]
+    [:number x]
 
     (b :guard boolean?)
-    [:bool nil b])))
+    [:bool b])))

@@ -8,47 +8,46 @@
   ([ctx term]
    (match
     term
-    [:number _ x]
+    [:number x]
     x
 
-    [:bool _ x]
+    [:bool x]
     x
 
-    [:if _ condition then else]
+    [:if condition then else]
     (list 'if
           (format ctx condition)
           (format ctx then)
           (format ctx else))
 
-    [:fn _ arg arg-type body]
+    [:fn arg arg-type body]
     (let [ctx (cons arg ctx)]
       (list 'fn [arg-type
                  arg]
             (format ctx body)))
-    [:var _ id]
+    [:var id]
     (nth ctx id)
 
-    [:call _ f arg]
+    [:call f arg]
     (list (format ctx f)
           (format ctx arg)))))
 
 (defn shift [delta term]
   (let [walk (fn walk [depth term]
                (match term
-                      [:var info id]
+                      [:var id]
                       (if (>= id depth)
-                        [:var info (+ delta id)]
+                        [:var (+ delta id)]
                         term)
 
-                      [:fn info arg arg-type body]
-                      [:fn info arg arg-type (walk (inc depth) body)]
+                      [:fn arg arg-type body]
+                      [:fn arg arg-type (walk (inc depth) body)]
 
-                      [:call info f arg]
-                      [:call info (walk depth f) (walk depth arg)]
+                      [:call f arg]
+                      [:call (walk depth f) (walk depth arg)]
 
-                      [:if info condition then else]
-                      [:if info
-                       (walk depth condition)
+                      [:if condition then else]
+                      [:if (walk depth condition)
                        (walk depth then)
                        (walk depth else)]
 
@@ -59,21 +58,20 @@
 (defn substitute-var [var-id replace-term term]
   (let [walk (fn walk [depth term]
                (match term
-                      [:var info id]
+                      [:var id]
                       (do
                         (if (= id (+ depth var-id))
                           (shift depth replace-term)
                           term))
 
-                      [:fn info arg arg-type body]
-                      [:fn info arg arg-type (walk (inc depth) body)]
+                      [:fn arg arg-type body]
+                      [:fn arg arg-type (walk (inc depth) body)]
 
-                      [:call info f arg]
-                      [:call info (walk depth f) (walk depth arg)]
+                      [:call f arg]
+                      [:call (walk depth f) (walk depth arg)]
 
-                      [:if info condition then else]
-                      [:if info
-                       (walk depth condition)
+                      [:if condition then else]
+                      [:if (walk depth condition)
                        (walk depth then)
                        (walk depth else)]
 

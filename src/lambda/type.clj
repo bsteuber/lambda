@@ -11,13 +11,13 @@
    (match
     term
 
-    [:bool _ _]
+    [:bool _]
     :Bool
 
-    [:number _ _]
+    [:number _]
     :Number
 
-    [:if _ condition then else]
+    [:if condition then else]
     (let [cond-type (type-of ctx condition)
           then-type (type-of ctx then)
           else-type (type-of ctx else)]
@@ -33,15 +33,15 @@
                         {:condition condition
                          :condition-type cond-type}))))
 
-    [:var _ id]
+    [:var id]
     (from-context ctx id)
 
-    [:fn _ arg arg-type body]
+    [:fn arg arg-type body]
     (let [ctx' (cons [arg arg-type] ctx)
           body-type (type-of ctx' body)]
       [:Fn arg-type body-type])
 
-    [:call _ f arg]
+    [:call f arg]
     (let [f-type (type-of ctx f)
           arg-type (type-of ctx arg)]
       (match f-type

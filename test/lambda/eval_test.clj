@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest testing is]]))
 
 (deftest eval
-  (is (= [:number nil 42]
-         (e/eval nil [:call nil
-                    [:fn nil 'x :int [:var nil 0]]
-                    [:number nil 42]]))))
+  (is (= [:number 42]
+         (e/eval [:call
+                  [:fn 'x :int [:var 0]]
+                  [:number 42]]))))

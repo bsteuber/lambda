@@ -4,72 +4,72 @@
             [clojure.test  :refer [deftest testing is]]))
 
 (deftest read-number
-  (is (= [:number nil 42]
+  (is (= [:number 42]
          (r/read 42))))
 
 (deftest read-bool
-  (is (= [:bool nil true]
+  (is (= [:bool true]
          (r/read true)))
-  (is (= [:bool nil false]
+  (is (= [:bool false]
          (r/read false))))
 
 (deftest read-if
-  (is (= [:if nil [:bool nil true]
-          [:number nil 1]
-          [:number nil 42]]
+  (is (= [:if [:bool true]
+          [:number 1]
+          [:number 42]]
          (r/read '(if true 1 42)))))
 
 (deftest read-fn
-  (is (= [:fn nil 'x :int
-          [:var nil 0]]
+  (is (= [:fn 'x :int
+          [:var 0]]
          (r/read '(fn [:int x] x))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'y :int
-           [:var nil 0]]]
+  (is (= [:fn 'x :int
+          [:fn 'y :int
+           [:var 0]]]
          (r/read '(fn [:int x]
                     (fn [:int y]
                       y)))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'x :int
-           [:var nil 0]]]
+  (is (= [:fn 'x :int
+          [:fn 'x :int
+           [:var 0]]]
          (r/read '(fn [:int x]
                     (fn [:int x]
                       x)))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'y :int
-           [:var nil 1]]]
+  (is (= [:fn 'x :int
+          [:fn 'y :int
+           [:var 1]]]
          (r/read '(fn [:int x]
                     (fn [:int y]
                       x)))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'y :int
-           [:fn nil 'z :int
-            [:var nil 2]]]]
+  (is (= [:fn 'x :int
+          [:fn 'y :int
+           [:fn 'z :int
+            [:var 2]]]]
          (r/read '(fn [:int x]
                     (fn [:int y]
                       (fn [:int z]
                         x))))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'y :int
-           [:fn nil 'z :int
-            [:var nil 1]]]]
+  (is (= [:fn 'x :int
+          [:fn 'y :int
+           [:fn 'z :int
+            [:var 1]]]]
          (r/read '(fn [:int x]
                     (fn [:int y]
                       (fn [:int z]
                         y))))))
-  (is (= [:fn nil 'x :int
-          [:fn nil 'y :int
-           [:fn nil 'z :int
-            [:var nil 0]]]]
+  (is (= [:fn 'x :int
+          [:fn 'y :int
+           [:fn 'z :int
+            [:var 0]]]]
          (r/read '(fn [:int x]
                     (fn [:int y]
                       (fn [:int z]
                         z)))))))
 
 (deftest read-call
-  (is (= [:call nil
-          [:fn nil 'x :int [:var nil 0]]
-          [:number nil 42]]
+  (is (= [:call
+          [:fn 'x :int [:var 0]]
+          [:number 42]]
          (r/read '((fn [:int x]
                      x)
                    42)))))
