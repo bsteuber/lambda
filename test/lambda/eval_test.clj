@@ -7,4 +7,7 @@
   (is (= [:number 42]
          (e/eval [:call
                   [:fn 'x :int [:var 0]]
-                  [:number 42]]))))
+                  [:number 42]])))
+  (is (= [:number 10]
+         (e/eval [:builtin '+ [[:number 3]
+                               [:number 7]]]))))

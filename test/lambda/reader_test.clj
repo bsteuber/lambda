@@ -73,3 +73,16 @@
          (r/read '((fn [:int x]
                      x)
                    42)))))
+
+(deftest read-builtin
+  (is (= [:builtin '+ [[:number 1]
+                       [:number 2]]]
+         (r/read '(+ 1 2))))
+  (is (= [:call
+          [:fn 'x :Number
+           [:builtin '+ [[:number 8]
+                         [:var 0]]]]
+          [:number 2]]
+         (r/read '((fn [:Number x]
+                     (+ 8 x))
+                   2)))))

@@ -21,16 +21,20 @@
           (format ctx else))
 
     [:fn arg arg-type body]
-    (let [ctx (cons arg ctx)]
+    (let [ctx' (cons arg ctx)]
       (list 'fn [arg-type
                  arg]
-            (format ctx body)))
+            (format ctx' body)))
     [:var id]
     (nth ctx id)
 
     [:call f arg]
     (list (format ctx f)
-          (format ctx arg)))))
+          (format ctx arg))
+
+    [:builtin op args]
+    (cons op
+          (map (partial format ctx) args)))))
 
 (defn shift [delta term]
   (let [walk (fn walk [depth term]
@@ -45,6 +49,9 @@
 
                       [:call f arg]
                       [:call (walk depth f) (walk depth arg)]
+
+                      [:builtin op args]
+                      [:builtin op (map (partial walk depth) args)]
 
                       [:if condition then else]
                       [:if (walk depth condition)
@@ -69,6 +76,9 @@
 
                       [:call f arg]
                       [:call (walk depth f) (walk depth arg)]
+
+                      [:builtin op args]
+                      [:builtin op (map (partial walk depth) args)]
 
                       [:if condition then else]
                       [:if (walk depth condition)

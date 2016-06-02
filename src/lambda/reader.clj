@@ -1,6 +1,7 @@
 (ns lambda.reader
   (:refer-clojure :exclude [read])
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [lambda.builtin     :as b]))
 
 (defn boolean? [b]
   (contains? #{true false} b))
@@ -18,6 +19,10 @@
      (read ctx depth then)
      (read ctx depth else)]
 
+
+    ([(op :guard b/builtin) & args] :seq)
+    [:builtin op (for [arg args]
+                   (read ctx depth arg))]
 
     (['fn [arg-type
            (arg :guard symbol?)]

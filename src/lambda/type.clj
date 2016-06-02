@@ -1,5 +1,6 @@
 (ns lambda.type
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [lambda.builtin     :as b]))
 
 (defn from-context [ctx id]
   (second (nth ctx id)))
@@ -16,6 +17,16 @@
 
     [:number _]
     :Number
+
+    [:builtin op args]
+    (let [arg-types (map (partial type-of ctx) args)
+          op-arg-types (b/arg-types op)]
+      (if (= op-arg-types arg-types)
+        (b/result-type op)
+        (throw (ex-info "Wrong builtin arg types"
+                        {:operator op
+                         :expected op-arg-types
+                         :given arg-types}))))
 
     [:if condition then else]
     (let [cond-type (type-of ctx condition)

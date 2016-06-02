@@ -1,7 +1,9 @@
 (ns lambda.eval
   (:refer-clojure :exclude [eval])
-  (:require [lambda.term        :as term]
-            [clojure.core.match :refer [match]]))
+  (:require [lambda.builtin     :as b]
+            [lambda.term        :as term]
+            [clojure.core.match :refer [match]]
+            [lambda.reader      :as r]))
 
 (defn eval-1 [ctx term]
   (let [val? (partial term/value? ctx)]
@@ -27,6 +29,12 @@
      [:if condition then else]
      (when-let [condition' (eval-1 ctx condition)]
        [:if condition' then else])
+
+     [:builtin op (args :guard (partial every? (partial term/value? ctx)))]
+     (->> args
+          (map term/format)
+          (apply (b/implementation op))
+          r/read)
 
      :else
      nil)))
