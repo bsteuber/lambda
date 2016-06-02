@@ -15,9 +15,15 @@
 (def t-call-y [:call t-fn-y t-var-0])
 (def s [:var 100])
 
-(deftest format
+(deftest format-nested-fn
   (is (= '(fn [:int x] (fn [:int y] x))
          (term/format t-fn-x-y))))
+
+(deftest format-record
+  (is (= '{:x 1
+           :y true}
+         (term/format [:record {:x [:number 1]
+                                :y [:bool true]}]))))
 
 (deftest shift
   (is (= [:var 1]

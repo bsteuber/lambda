@@ -1,92 +1,106 @@
 (ns lambda.term
   (:refer-clojure :exclude [format])
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [lambda.util        :refer [map-vals]]))
 
 (defn format
   ([term]
    (format () term))
   ([ctx term]
-   (match
-    term
-    [:number x]
-    x
+   (let [fmt (partial format ctx)]
+     (match
+       term
+       [:number x]
+       x
 
-    [:bool x]
-    x
+       [:bool x]
+       x
 
-    [:if condition then else]
-    (list 'if
-          (format ctx condition)
-          (format ctx then)
-          (format ctx else))
+       [:record m]
+       (map-vals fmt m)
 
-    [:fn arg arg-type body]
-    (let [ctx' (cons arg ctx)]
-      (list 'fn [arg-type
-                 arg]
-            (format ctx' body)))
-    [:var id]
-    (nth ctx id)
+       [:if condition then else]
+       (list 'if
+             (fmt condition)
+             (fmt then)
+             (fmt else))
 
-    [:call f arg]
-    (list (format ctx f)
-          (format ctx arg))
+       [:fn arg arg-type body]
+       (let [ctx' (cons arg ctx)]
+         (list 'fn [arg-type
+                    arg]
+               (format ctx' body)))
 
-    [:builtin op args]
-    (cons op
-          (map (partial format ctx) args)))))
+       [:var id]
+       (nth ctx id)
+
+       [:call f arg]
+       (list (fmt f)
+             (fmt arg))
+
+       [:builtin op args]
+       (cons op
+             (map fmt args))))))
 
 (defn shift [delta term]
   (let [walk (fn walk [depth term]
-               (match term
-                      [:var id]
-                      (if (>= id depth)
-                        [:var (+ delta id)]
-                        term)
+               (let [wlk (partial walk depth)]
+                 (match term
+                   [:var id]
+                   (if (>= id depth)
+                     [:var (+ delta id)]
+                     term)
 
-                      [:fn arg arg-type body]
-                      [:fn arg arg-type (walk (inc depth) body)]
+                   [:fn arg arg-type body]
+                   [:fn arg arg-type (walk (inc depth) body)]
 
-                      [:call f arg]
-                      [:call (walk depth f) (walk depth arg)]
+                   [:call f arg]
+                   [:call (wlk f) (wlk arg)]
 
-                      [:builtin op args]
-                      [:builtin op (map (partial walk depth) args)]
+                   [:builtin op args]
+                   [:builtin op (map wlk args)]
 
-                      [:if condition then else]
-                      [:if (walk depth condition)
-                       (walk depth then)
-                       (walk depth else)]
+                   [:if condition then else]
+                   [:if (wlk condition)
+                    (wlk then)
+                    (wlk else)]
 
-                      :else
-                      term))]
+                   [:record m]
+                   (map-vals wlk m)
+
+                   :else
+                   term)))]
     (walk 0 term)))
 
 (defn substitute-var [var-id replace-term term]
   (let [walk (fn walk [depth term]
-               (match term
-                      [:var id]
-                      (do
-                        (if (= id (+ depth var-id))
-                          (shift depth replace-term)
-                          term))
+               (let [wlk (partial walk depth)]
+                 (match term
+                   [:var id]
+                   (do
+                     (if (= id (+ depth var-id))
+                       (shift depth replace-term)
+                       term))
 
-                      [:fn arg arg-type body]
-                      [:fn arg arg-type (walk (inc depth) body)]
+                   [:fn arg arg-type body]
+                   [:fn arg arg-type (walk (inc depth) body)]
 
-                      [:call f arg]
-                      [:call (walk depth f) (walk depth arg)]
+                   [:call f arg]
+                   [:call (wlk f) (wlk arg)]
 
-                      [:builtin op args]
-                      [:builtin op (map (partial walk depth) args)]
+                   [:builtin op args]
+                   [:builtin op (map wlk args)]
 
-                      [:if condition then else]
-                      [:if (walk depth condition)
-                       (walk depth then)
-                       (walk depth else)]
+                   [:if condition then else]
+                   [:if (wlk condition)
+                    (wlk then)
+                    (wlk else)]
 
-                      :else
-                      term))]
+                   [:record m]
+                   (map-vals wlk m)
+
+                   :else
+                   term)))]
     (walk 0 term)))
 
 (defn substitute-top-var [term replace-term]
@@ -94,5 +108,8 @@
        (substitute-var 0 (shift 1 replace-term))
        (shift -1)))
 
-(defn value? [ctx term]
-  (#{:bool :number :fn} (first term)))
+(defn value? [ctx [tag & args]]
+  (or (#{:bool :number :fn} tag)
+      (and (= tag :record)
+           (every? (partial value? ctx)
+                   (vals (first args))))))

@@ -30,4 +30,11 @@
                        (fn [:Number y]
                          (+ x y)))
                     2)
-                   6)))))
+                   6))))
+  (is (= [[:Record {:x :Number}] {:x 1}]
+         (c/eval '{:x 1})))
+  (is (= [[:Record {:x :Number
+                    :y :Bool}] {:x 1
+                                :y false}]
+         (c/eval '{:x (if true 1 2)
+                   :y (zero? 1)}))))

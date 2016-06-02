@@ -1,6 +1,7 @@
 (ns lambda.type
   (:require [clojure.core.match :refer [match]]
-            [lambda.builtin     :as b]))
+            [lambda.builtin     :as b]
+            [lambda.util        :refer [map-vals]]))
 
 (defn from-context [ctx id]
   (second (nth ctx id)))
@@ -10,57 +11,60 @@
    (type-of () term))
   ([ctx term]
    (match
-    term
+     term
 
-    [:bool _]
-    :Bool
+     [:bool _]
+     :Bool
 
-    [:number _]
-    :Number
+     [:number _]
+     :Number
 
-    [:builtin op args]
-    (let [arg-types (map (partial type-of ctx) args)
-          op-arg-types (b/arg-types op)]
-      (if (= op-arg-types arg-types)
-        (b/result-type op)
-        (throw (ex-info "Wrong builtin arg types"
-                        {:operator op
-                         :expected op-arg-types
-                         :given arg-types}))))
+     [:record m]
+     [:Record (map-vals (partial type-of ctx) m)]
 
-    [:if condition then else]
-    (let [cond-type (type-of ctx condition)
-          then-type (type-of ctx then)
-          else-type (type-of ctx else)]
-      (if (= :Bool cond-type)
-        (if (= then-type else-type)
-          then-type
-          (throw (ex-info "if: then and else branches have different types"
-                          {:then then
-                           :else else
-                           :then-type then-type
-                           :else-type else-type})))
-        (throw (ex-info "if: condition must have type :Bool"
-                        {:condition condition
-                         :condition-type cond-type}))))
+     [:builtin op args]
+     (let [arg-types (map (partial type-of ctx) args)
+           op-arg-types (b/arg-types op)]
+       (if (= op-arg-types arg-types)
+         (b/result-type op)
+         (throw (ex-info "Wrong builtin arg types"
+                         {:operator op
+                          :expected op-arg-types
+                          :given arg-types}))))
 
-    [:var id]
-    (from-context ctx id)
+     [:if condition then else]
+     (let [cond-type (type-of ctx condition)
+           then-type (type-of ctx then)
+           else-type (type-of ctx else)]
+       (if (= :Bool cond-type)
+         (if (= then-type else-type)
+           then-type
+           (throw (ex-info "if: then and else branches have different types"
+                           {:then then
+                            :else else
+                            :then-type then-type
+                            :else-type else-type})))
+         (throw (ex-info "if: condition must have type :Bool"
+                         {:condition condition
+                          :condition-type cond-type}))))
 
-    [:fn arg arg-type body]
-    (let [ctx' (cons [arg arg-type] ctx)
-          body-type (type-of ctx' body)]
-      [:Fn arg-type body-type])
+     [:var id]
+     (from-context ctx id)
 
-    [:call f arg]
-    (let [f-type (type-of ctx f)
-          arg-type (type-of ctx arg)]
-      (match f-type
-             [:Fn f-arg-type f-ret-type]
-             (if (= arg-type f-arg-type)
-               f-ret-type
-               (throw (ex-info "Parameter type mismatch" {:expected f-arg-type
-                                                          :given arg-type})))
+     [:fn arg arg-type body]
+     (let [ctx' (cons [arg arg-type] ctx)
+           body-type (type-of ctx' body)]
+       [:Fn arg-type body-type])
 
-             :else
-             (throw (ex-info "Function type expected" {:given f-type})))))))
+     [:call f arg]
+     (let [f-type (type-of ctx f)
+           arg-type (type-of ctx arg)]
+       (match f-type
+         [:Fn f-arg-type f-ret-type]
+         (if (= arg-type f-arg-type)
+           f-ret-type
+           (throw (ex-info "Parameter type mismatch" {:expected f-arg-type
+                                                      :given arg-type})))
+
+         :else
+         (throw (ex-info "Function type expected" {:given f-type})))))))

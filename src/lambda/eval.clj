@@ -5,6 +5,15 @@
             [clojure.core.match :refer [match]]
             [lambda.reader      :as r]))
 
+(declare eval-1)
+
+(defn eval-first-non-value [ctx terms]
+  (let [[values [next-non-value & more]] (split-with (partial term/value? ctx)
+                                                     terms)
+        next-evaled (eval-1 ctx next-non-value)]
+    (when next-evaled
+      (concat values (cons next-evaled more)))))
+
 (defn eval-1 [ctx term]
   (let [val? (partial term/value? ctx)]
     (match term
@@ -36,11 +45,17 @@
            r/read)
 
       [:builtin op args]
-      (let [[values [next-non-value & more]] (split-with val? args)
-            next-evaled (eval-1 ctx next-non-value)
-            args' (concat values (cons next-evaled more))]
-        (when next-evaled
-          [:builtin op args']))
+      (when-let [args' (eval-first-non-value ctx args)]
+        [:builtin op args'])
+
+      [:record (m :guard (comp (partial every? val?)
+                               vals))]
+      nil
+
+      [:record m]
+      (when-let [vals' (eval-first-non-value ctx (vals m))]
+        [:record (zipmap (keys m)
+                         vals')])
 
       :else
       nil)))
