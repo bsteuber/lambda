@@ -19,4 +19,15 @@
   (is (= [:Number 10]
          (c/eval '((fn [:Number x]
                      (+ 8 x))
-                   2)))))
+                   2))))
+  (is (= [:Bool true]
+         (c/eval '(zero? (- 5 5)))))
+  (is (= [:Number 10]
+         (c/eval '(+ (+ 1 0)
+                     (+ 2 7)))))
+  (is (= [:Number 8]
+         (c/eval '(((fn [:Number x]
+                       (fn [:Number y]
+                         (+ x y)))
+                    2)
+                   6)))))
