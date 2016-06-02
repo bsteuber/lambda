@@ -10,12 +10,6 @@
    (let [fmt (partial format ctx)]
      (match
        term
-       [:number x]
-       x
-
-       [:bool x]
-       x
-
        [:record m]
        (map-vals fmt m)
 
@@ -43,7 +37,10 @@
 
        [:builtin op args]
        (cons op
-             (map fmt args))))))
+             (map fmt args))
+
+       [primitive x]
+       x))))
 
 (defn shift [delta term]
   (let [walk (fn walk [depth term]
@@ -118,7 +115,7 @@
        (shift -1)))
 
 (defn value? [ctx [tag & args]]
-  (or (#{:bool :number :fn} tag)
+  (or (#{:bool :number :int :fn} tag)
       (and (= tag :record)
            (every? (partial value? ctx)
                    (vals (first args))))))

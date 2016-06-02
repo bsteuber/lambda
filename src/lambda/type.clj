@@ -1,10 +1,35 @@
 (ns lambda.type
+  (:refer-clojure :exclude [>])
   (:require [clojure.core.match :refer [match]]
             [lambda.builtin     :as b]
             [lambda.util        :refer [map-vals]]))
 
 (defn from-context [ctx id]
   (second (nth ctx id)))
+
+(defn > [super-type sub-type]
+  (or (= super-type sub-type)
+      (match [super-type sub-type]
+        [:Top _]
+        true
+
+        [[:Fn super-arg super-res]
+         [:Fn sub-arg sub-res]]
+        (and (> sub-arg super-arg)
+             (> super-res sub-res))
+
+        [[:Record super-m]
+         [:Record sub-m]]
+        (every? (fn [[key super-type]]
+                  (when-let [sub-type (key sub-m)]
+                    (> super-type sub-type)))
+                super-m)
+
+        [:Number :Int]
+        true
+
+        :else
+        false)))
 
 (defn type-of
   ([term]
@@ -16,6 +41,9 @@
 
        [:bool _]
        :Bool
+
+       [:int _]
+       :Int
 
        [:number _]
        :Number
@@ -39,7 +67,8 @@
        [:builtin op args]
        (let [arg-types (map typ args)
              op-arg-types (b/arg-types op)]
-         (if (= op-arg-types arg-types)
+         (if (every? identity
+                     (map > op-arg-types arg-types))
            (b/result-type op)
            (throw (ex-info "Wrong builtin arg types"
                            {:operator op
@@ -75,7 +104,7 @@
              arg-type (typ arg)]
          (match f-type
            [:Fn f-arg-type f-ret-type]
-           (if (= arg-type f-arg-type)
+           (if (> f-arg-type arg-type)
              f-ret-type
              (throw (ex-info "Parameter type mismatch" {:expected f-arg-type
                                                         :given arg-type})))

@@ -4,8 +4,10 @@
             [clojure.test  :refer [deftest testing is]]))
 
 (deftest read-number
-  (is (= [:number 42]
-         (r/read 42))))
+  (is (= [:int 42]
+         (r/read 42)))
+  (is (= [:number 0.1]
+         (r/read 0.1))))
 
 (deftest read-bool
   (is (= [:bool true]
@@ -15,74 +17,74 @@
 
 (deftest read-if
   (is (= [:if [:bool true]
-          [:number 1]
-          [:number 42]]
+          [:int 1]
+          [:int 42]]
          (r/read '(if true 1 42)))))
 
 (deftest read-fn
-  (is (= [:fn 'x :int
+  (is (= [:fn 'x :Int
           [:var 0]]
-         (r/read '(fn [:int x] x))))
-  (is (= [:fn 'x :int
-          [:fn 'y :int
+         (r/read '(fn [:Int x] x))))
+  (is (= [:fn 'x :Int
+          [:fn 'y :Int
            [:var 0]]]
-         (r/read '(fn [:int x]
-                    (fn [:int y]
+         (r/read '(fn [:Int x]
+                    (fn [:Int y]
                       y)))))
-  (is (= [:fn 'x :int
-          [:fn 'x :int
+  (is (= [:fn 'x :Int
+          [:fn 'x :Int
            [:var 0]]]
-         (r/read '(fn [:int x]
-                    (fn [:int x]
+         (r/read '(fn [:Int x]
+                    (fn [:Int x]
                       x)))))
-  (is (= [:fn 'x :int
-          [:fn 'y :int
+  (is (= [:fn 'x :Int
+          [:fn 'y :Int
            [:var 1]]]
-         (r/read '(fn [:int x]
-                    (fn [:int y]
+         (r/read '(fn [:Int x]
+                    (fn [:Int y]
                       x)))))
-  (is (= [:fn 'x :int
-          [:fn 'y :int
-           [:fn 'z :int
+  (is (= [:fn 'x :Int
+          [:fn 'y :Int
+           [:fn 'z :Int
             [:var 2]]]]
-         (r/read '(fn [:int x]
-                    (fn [:int y]
-                      (fn [:int z]
+         (r/read '(fn [:Int x]
+                    (fn [:Int y]
+                      (fn [:Int z]
                         x))))))
-  (is (= [:fn 'x :int
-          [:fn 'y :int
-           [:fn 'z :int
+  (is (= [:fn 'x :Int
+          [:fn 'y :Int
+           [:fn 'z :Int
             [:var 1]]]]
-         (r/read '(fn [:int x]
-                    (fn [:int y]
-                      (fn [:int z]
+         (r/read '(fn [:Int x]
+                    (fn [:Int y]
+                      (fn [:Int z]
                         y))))))
-  (is (= [:fn 'x :int
-          [:fn 'y :int
-           [:fn 'z :int
+  (is (= [:fn 'x :Int
+          [:fn 'y :Int
+           [:fn 'z :Int
             [:var 0]]]]
-         (r/read '(fn [:int x]
-                    (fn [:int y]
-                      (fn [:int z]
+         (r/read '(fn [:Int x]
+                    (fn [:Int y]
+                      (fn [:Int z]
                         z)))))))
 
 (deftest read-call
   (is (= [:call
-          [:fn 'x :int [:var 0]]
-          [:number 42]]
-         (r/read '((fn [:int x]
+          [:fn 'x :Int [:var 0]]
+          [:int 42]]
+         (r/read '((fn [:Int x]
                      x)
                    42)))))
 
 (deftest read-builtin
-  (is (= [:builtin '+ [[:number 1]
-                       [:number 2]]]
+  (is (= [:builtin '+ [[:int 1]
+                       [:int 2]]]
          (r/read '(+ 1 2))))
   (is (= [:call
           [:fn 'x :Number
-           [:builtin '+ [[:number 8]
+           [:builtin '+ [[:int 8]
                          [:var 0]]]]
-          [:number 2]]
+          [:int 2]]
          (r/read '((fn [:Number x]
                      (+ 8 x))
                    2)))))

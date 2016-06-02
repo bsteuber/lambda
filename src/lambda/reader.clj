@@ -41,6 +41,9 @@
                                  {:context ctx
                                   :var sym})))]
 
+       (x :guard integer?)
+       [:int x]
+
        (x :guard number?)
        [:number x]
 
