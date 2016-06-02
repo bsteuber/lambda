@@ -14,7 +14,7 @@
        (map-vals fmt m)
 
        [:lookup key record]
-       (list key record)
+       (list key (fmt record))
 
        [:if condition then else]
        (list 'if

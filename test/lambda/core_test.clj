@@ -45,4 +45,38 @@
   (is (= [:Number 42]
          (c/eval '((fn [[:Record {:x :Number}] rec]
                      (:x rec))
-                   {:x (if true 42 0)})))))
+                   {:x (if true 42 0)}))))
+  (is (= [:Number 10]
+         (c/eval '(if true 10 1.2))))
+  (is (= [[:Fn :Int :Number] '(fn [:Number x]
+                                42)]
+         (c/eval '(if true
+                    (fn [:Number x]
+                      42)
+                    (fn [:Int x]
+                      1.3)))))
+  (is (= [[:Record {:x :Number}] {:x 3
+                                  :y 4}]
+         (c/eval '(if true
+                    {:x 3
+                     :y 4}
+                    {:x 3.5
+                     :z true}))))
+  (is (= [[:Fn [:Record {:x :Int
+                         :y :Number
+                         :z :Bool}] :Number]
+          '(fn [[:Record {:x :Int
+                          :y :Number}]
+                m]
+             (:x m))]
+         (c/eval '(if true
+                    (fn [[:Record {:x :Int
+                                   :y :Number}]
+                         m]
+                      (:x m))
+                    (fn [[:Record {:x :Number
+                                   :z :Bool}]
+                         m]
+                      (:x m))
+
+                    )))))

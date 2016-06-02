@@ -31,6 +31,68 @@
         :else
         false)))
 
+(declare intersection)
+
+(defn union [type-1 type-2]
+  (cond
+    (= type-1 type-2)
+    type-1
+
+    (> type-1 type-2)
+    type-1
+
+    (> type-2 type-1)
+    type-2
+
+    :else
+    (match [type-1 type-2]
+      [[:Fn arg-1 res-1] [:Fn arg-2 res-2]]
+      [:Fn (intersection arg-1 arg-2) (union res-1 res-2)]
+
+      [[:Record m-1] [:Record m-2]]
+      [:Record (->> m-1
+                    (map (fn [[key type-1]]
+                           (when-let [type-2 (key m-2)]
+                             [key (union type-1 type-2)])))
+                    (remove nil?)
+                    (into {}))]
+
+      :else
+      :Top)))
+
+(defn intersection [type-1 type-2]
+  (cond
+    (= type-1 type-2)
+    type-1
+
+    (> type-1 type-2)
+    type-2
+
+    (> type-2 type-1)
+    type-1
+
+    :else
+    (do
+      (match [type-1 type-2]
+        [[:Fn arg-1 res-1] [:Fn arg-2 res-2]]
+        [:Fn (union arg-1 arg-2) (intersection res-1 res-2)]
+
+        [[:Record m-1] [:Record m-2]]
+        [:Record (->> (concat (keys m-1) (keys m-2))
+                      distinct
+                      (map (fn [key]
+                             [key
+                              (match [(key m-1) (key m-2)]
+                                [ty-1 nil] ty-1
+                                [nil ty-2] ty-2
+                                [ty-1 ty-2] (intersection ty-1 ty-2))]))
+                      (into {}))]
+
+        :else
+        (throw (ex-info "No intersection type"
+                        {:type-1 type-1
+                         :type-2 type-2}))))))
+
 (defn type-of
   ([term]
    (type-of () term))
@@ -80,9 +142,9 @@
              then-type (typ then)
              else-type (typ else)]
          (if (= :Bool cond-type)
-           (if (= then-type else-type)
-             then-type
-             (throw (ex-info "if: then and else branches have different types"
+           (if-let [result-type (union then-type else-type)]
+             result-type
+             (throw (ex-info "if: then and else branches have no union type"
                              {:then then
                               :else else
                               :then-type then-type
