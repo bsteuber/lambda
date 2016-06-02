@@ -13,6 +13,12 @@
   (is (= [:bool nil false]
          (r/read false))))
 
+(deftest read-if
+  (is (= [:if nil [:bool nil true]
+          [:number nil 1]
+          [:number nil 42]]
+         (r/read '(if true 1 42)))))
+
 (deftest read-fn
   (is (= [:fn nil 'x :int
           [:var nil 0]]
