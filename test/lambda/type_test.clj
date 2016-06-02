@@ -6,6 +6,15 @@
 (deftest type-of
   (is (= :Number
          (ty/type-of (r/read 42))))
+  (is (= :Bool
+         (ty/type-of (r/read true))))
+
+  (is (= :Number
+         (ty/type-of (r/read '(if ((fn [:Number x]
+                                     true)
+                                   42)
+                                1
+                                10)))))
   (is (= [:Fn :Number :Number]
          (ty/type-of (r/read '(fn [:Number x]
                                 x)))))

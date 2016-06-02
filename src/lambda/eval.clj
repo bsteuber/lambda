@@ -18,6 +18,16 @@
      (when-let [t1' (eval-1 ctx t1)]
        [:call info t1' t2])
 
+     [:if info [:bool _ true] then _]
+     then
+
+     [:if info [:bool _ false] _ else]
+     else
+
+     [:if info condition then else]
+     (when-let [condition' (eval-1 ctx condition)]
+       [:if info condition' then else])
+
      :else
      nil)))
 

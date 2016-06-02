@@ -11,8 +11,27 @@
    (match
     term
 
+    [:bool _ _]
+    :Bool
+
     [:number _ _]
     :Number
+
+    [:if _ condition then else]
+    (let [cond-type (type-of ctx condition)
+          then-type (type-of ctx then)
+          else-type (type-of ctx else)]
+      (if (= :Bool cond-type)
+        (if (= then-type else-type)
+          then-type
+          (throw (ex-info "if: then and else branches have different types"
+                          {:then then
+                           :else else
+                           :then-type then-type
+                           :else-type else-type})))
+        (throw (ex-info "if: condition must have type :Bool"
+                        {:condition condition
+                         :condition-type cond-type}))))
 
     [:var _ id]
     (from-context ctx id)

@@ -11,6 +11,15 @@
     [:number _ x]
     x
 
+    [:bool _ x]
+    x
+
+    [:if _ condition then else]
+    (list 'if
+          (format ctx condition)
+          (format ctx then)
+          (format ctx else))
+
     [:fn _ arg arg-type body]
     (let [ctx (cons arg ctx)]
       (list 'fn [arg-type
@@ -26,9 +35,6 @@
 (defn shift [delta term]
   (let [walk (fn walk [depth term]
                (match term
-                      [:number _ _]
-                      term
-
                       [:var info id]
                       (if (>= id depth)
                         [:var info (+ delta id)]
@@ -38,15 +44,21 @@
                       [:fn info arg arg-type (walk (inc depth) body)]
 
                       [:call info f arg]
-                      [:call info (walk depth f) (walk depth arg)]))]
+                      [:call info (walk depth f) (walk depth arg)]
+
+                      [:if info condition then else]
+                      [:if info
+                       (walk depth condition)
+                       (walk depth then)
+                       (walk depth else)]
+
+                      :else
+                      term))]
     (walk 0 term)))
 
 (defn substitute-var [var-id replace-term term]
   (let [walk (fn walk [depth term]
                (match term
-                      [:number _ _]
-                      term
-
                       [:var info id]
                       (do
                         (if (= id (+ depth var-id))
@@ -57,7 +69,16 @@
                       [:fn info arg arg-type (walk (inc depth) body)]
 
                       [:call info f arg]
-                      [:call info (walk depth f) (walk depth arg)]))]
+                      [:call info (walk depth f) (walk depth arg)]
+
+                      [:if info condition then else]
+                      [:if info
+                       (walk depth condition)
+                       (walk depth then)
+                       (walk depth else)]
+
+                      :else
+                      term))]
     (walk 0 term)))
 
 (defn substitute-top-var [term replace-term]
@@ -66,4 +87,4 @@
        (shift -1)))
 
 (defn value? [ctx term]
-  (#{:number :fn} (first term)))
+  (#{:bool :number :fn} (first term)))

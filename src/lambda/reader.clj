@@ -2,12 +2,22 @@
   (:refer-clojure :exclude [read])
   (:require [clojure.core.match :refer [match]]))
 
+(defn boolean? [b]
+  (contains? #{true false} b))
+
 (defn read
   ([expr]
    (read {} 0 expr))
   ([ctx depth expr]
    (match
     expr
+
+    (['if condition then else] :seq)
+    [:if nil
+     (read ctx depth condition)
+     (read ctx depth then)
+     (read ctx depth else)]
+
 
     (['fn [arg-type
            (arg :guard symbol?)]
@@ -22,9 +32,14 @@
      (read ctx depth f)
      (read ctx depth arg)]
 
-    (sym :guard symbol?) [:var nil (or (- depth (ctx sym))
-                                     (throw (ex-info "Var not found"
-                                                     {:context ctx
-                                                      :var sym})))]
+    (sym :guard symbol?)
+    [:var nil (or (- depth (ctx sym))
+                  (throw (ex-info "Var not found"
+                                  {:context ctx
+                                   :var sym})))]
 
-    (x :guard number?) [:number nil x])))
+    (x :guard number?)
+    [:number nil x]
+
+    (b :guard boolean?)
+    [:bool nil b])))

@@ -3,11 +3,17 @@
   (:require [lambda.reader :as r]
             [clojure.test  :refer [deftest testing is]]))
 
-(deftest read-numbers
+(deftest read-number
   (is (= [:number nil 42]
          (r/read 42))))
 
-(deftest read-fns
+(deftest read-bool
+  (is (= [:bool nil true]
+         (r/read true)))
+  (is (= [:bool nil false]
+         (r/read false))))
+
+(deftest read-fn
   (is (= [:fn nil 'x :int
           [:var nil 0]]
          (r/read '(fn [:int x] x))))
