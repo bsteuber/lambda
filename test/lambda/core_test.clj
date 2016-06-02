@@ -1,6 +1,7 @@
 (ns lambda.core-test
   (:refer-clojure :exclude [eval])
   (:require [lambda.core  :as c]
+            [lambda.eval  :as e]
             [clojure.test :refer [deftest is]]))
 
 (deftest eval
@@ -37,4 +38,11 @@
                     :y :Bool}] {:x 1
                                 :y false}]
          (c/eval '{:x (if true 1 2)
-                   :y (zero? 1)}))))
+                   :y (zero? 1)})))
+  (is (= [:Number 42]
+         (c/eval '(:x {:x 42
+                       :y false}))))
+  (is (= [:Number 42]
+         (c/eval '((fn [[:Record {:x :Number}] rec]
+                     (:x rec))
+                   {:x (if true 42 0)})))))

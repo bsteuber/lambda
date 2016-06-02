@@ -15,7 +15,8 @@
       (concat values (cons next-evaled more)))))
 
 (defn eval-1 [ctx term]
-  (let [val? (partial term/value? ctx)]
+  (let [val? (partial term/value? ctx)
+        vals? (partial every? val?)]
     (match term
       [:call [:fn argname _ body] (arg :guard val?)]
       (term/substitute-top-var body arg)
@@ -38,7 +39,7 @@
       (when-let [condition' (eval-1 ctx condition)]
         [:if condition' then else])
 
-      [:builtin op (args :guard (partial every? val?))]
+      [:builtin op (args :guard vals?)]
       (->> args
            (map term/format)
            (apply (b/implementation op))
@@ -48,8 +49,7 @@
       (when-let [args' (eval-first-non-value ctx args)]
         [:builtin op args'])
 
-      [:record (m :guard (comp (partial every? val?)
-                               vals))]
+      [:record (m :guard (comp vals? vals))]
       nil
 
       [:record m]
@@ -57,13 +57,25 @@
         [:record (zipmap (keys m)
                          vals')])
 
+      [:lookup key (record :guard val?)]
+      (match record
+        [:record m] (key m))
+
+      [:lookup key record]
+      (when-let [record' (eval-1 record)]
+        [:lookup key record'])
+
       :else
       nil)))
+
+(def ^:dynamic *print-steps* false)
 
 (defn eval
   ([term]
    (eval {} term))
   ([ctx term]
+   (when *print-steps*
+     (prn term))
    (if-let [term' (eval-1 ctx term)]
      (recur ctx term')
      term)))

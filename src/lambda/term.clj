@@ -19,6 +19,9 @@
        [:record m]
        (map-vals fmt m)
 
+       [:lookup key record]
+       (list key record)
+
        [:if condition then else]
        (list 'if
              (fmt condition)
@@ -66,7 +69,10 @@
                     (wlk else)]
 
                    [:record m]
-                   (map-vals wlk m)
+                   [:record (map-vals wlk m)]
+
+                   [:lookup key record]
+                   [:lookup key (wlk record)]
 
                    :else
                    term)))]
@@ -97,7 +103,10 @@
                     (wlk else)]
 
                    [:record m]
-                   (map-vals wlk m)
+                   [:record (map-vals wlk m)]
+
+                   [:lookup key record]
+                   [:lookup key (wlk record)]
 
                    :else
                    term)))]
