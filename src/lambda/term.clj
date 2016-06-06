@@ -8,8 +8,7 @@
    (format () term))
   ([ctx term]
    (let [fmt (partial format ctx)]
-     (match
-       term
+     (match term
        [:record m]
        (map-vals fmt m)
 
