@@ -45,14 +45,12 @@
        (cons op
              (map fmt args))))))
 
-(defn shift [delta term]
+(defn term-map [f term]
   (let [walk (fn walk [depth term]
                (let [wlk (partial walk depth)]
                  (match term
                    [:var id]
-                   (if (>= id depth)
-                     [:var (+ delta id)]
-                     term)
+                   (f depth id)
 
                    [:fn arg arg-type body]
                    [:fn arg arg-type (walk (inc depth) body)]
@@ -77,40 +75,20 @@
                    :else
                    term)))]
     (walk 0 term)))
+
+(defn shift [delta term]
+  (term-map (fn [depth id]
+              (if (>= id depth)
+                [:var (+ delta id)]
+                [:var id]))
+            term))
 
 (defn substitute-var [var-id replace-term term]
-  (let [walk (fn walk [depth term]
-               (let [wlk (partial walk depth)]
-                 (match term
-                   [:var id]
-                   (do
-                     (if (= id (+ depth var-id))
-                       (shift depth replace-term)
-                       term))
-
-                   [:fn arg arg-type body]
-                   [:fn arg arg-type (walk (inc depth) body)]
-
-                   [:call f arg]
-                   [:call (wlk f) (wlk arg)]
-
-                   [:builtin op args]
-                   [:builtin op (map wlk args)]
-
-                   [:if condition then else]
-                   [:if (wlk condition)
-                    (wlk then)
-                    (wlk else)]
-
-                   [:record m]
-                   [:record (map-vals wlk m)]
-
-                   [:lookup key record]
-                   [:lookup key (wlk record)]
-
-                   :else
-                   term)))]
-    (walk 0 term)))
+  (term-map (fn [depth id]
+              (if (= id (+ depth var-id))
+                (shift depth replace-term)
+                [:var id]))
+            term))
 
 (defn substitute-top-var [term replace-term]
   (->> term
