@@ -6,6 +6,48 @@
 (defn from-context [ctx id]
   (second (nth ctx id)))
 
+(defn type-map [f type]
+  (let [walk (fn walk [depth type]
+               (let [wlk (partial walk depth)]
+                 (match type
+                   [:Record m]
+                   [:Record (map-vals wlk m)]
+
+                   [:Fn arg-type body-type]
+                   [:Fn (wlk arg-type) (wlk body-type)]
+
+                   [:Forall type-var type-body]
+                   [:Forall type-var (walk (inc depth) type-body)]
+
+                   [:Exists type-var type-body]
+                   [:Exists type-var (walk (inc depth) type-body)]
+
+                   [:Type-Var id]
+                   (f depth id)
+
+                   :else
+                   type)))]
+    (walk 0 type)))
+
+(defn shift [delta type]
+  (type-map (fn [depth id]
+              (if (>= id depth)
+                [:Type-Var (+ delta id)]
+                [:Type-Var id]))
+            type))
+
+(defn substitute-var [var-id replace-type type]
+  (type-map (fn [depth id]
+              (if (= id (+ depth var-id))
+                (shift depth replace-type)
+                [:Type-Var id]))
+            type))
+
+(defn substitute-top-var [type replace-type]
+  (->> type
+       (substitute-var 0 (shift 1 replace-type))
+       (shift -1)))
+
 (defn type-of
   ([term]
    (type-of () term))
