@@ -5,17 +5,17 @@
 
 (deftest substitute
   (is (= [:Fn :Bool :Bool]
-         (ty/substitute-top-var [:Fn
-                                 [:Type-Var 0]
-                                 [:Type-Var 0]]
-                                :Bool)))
+         (ty/substitute-top [:Fn
+                             [:Type-Var 0]
+                             [:Type-Var 0]]
+                            :Bool)))
   (is (= [:Record
           {:x :Number
            :y [:Type-Var 0]}]
-         (ty/substitute-top-var [:Record
-                                 {:x [:Type-Var 0]
-                                  :y [:Type-Var 1]}]
-                                :Number))))
+         (ty/substitute-top [:Record
+                             {:x [:Type-Var 0]
+                              :y [:Type-Var 1]}]
+                            :Number))))
 
 (deftest type-of
   (is (= :Number

@@ -65,6 +65,26 @@
       (when-let [record' (eval-1 record)]
         [:lookup key record'])
 
+      [:apply-generic [:generic type-arg body] type]
+      (term/substitute-top-type-var body type)
+
+      [:apply-generic generic type]
+      (when-let [generic' (eval-1 ctx generic)]
+        [:apply-generic generic' type])
+
+      [:unpack type-var var [:pack impl-type body as-type] result-term]
+      (-> result-term
+          (term/substitute-top-var (term/shift 1 body))
+          (term/substitute-top-type-var impl-type))
+
+      [:unpack type-var var packed result-term]
+      (when-let [packed' (eval-1 ctx packed)]
+        [:unpack type-var var packed' result-term])
+
+      [:pack impl-type body as-type]
+      (when-let [body' (eval-1 ctx body)]
+        [:pack impl-type body' as-type])
+
       :else
       nil)))
 
@@ -78,4 +98,6 @@
      (prn term))
    (if-let [term' (eval-1 ctx term)]
      (recur ctx term')
-     term)))
+     (if (term/value? ctx term)
+       term
+       (throw (ex-info "Couldn't evaluate" {:term term}))))))

@@ -46,3 +46,30 @@
          (c/eval '((fn [[:Record {:x :Number}] rec]
                      (:x rec))
                    {:x (if true 42 0)})))))
+
+(deftest eval-generic
+  (is (= '[[:Fn :Number :Bool]
+           (fn [:Number x]
+             true)]
+         (c/eval '(apply-generic
+                   (generic X (fn [[:Type-Var 0] x]
+                                true))
+                   :Number))))
+  (is (= '[:Bool
+           true]
+         (c/eval '((apply-generic
+                    (generic X (fn [[:Type-Var 0] x]
+                                 true))
+                    :Number)
+                   42)))))
+
+(deftest eval-existential
+  (is (= [:Number 1]
+         (binding [e/*print-steps* true]
+           (c/with-error-pprint
+             (c/eval '(let [[T f] (pack :Number
+                                        (fn [:Number x]
+                                          x)
+                                        [:Some T [:Fn :Number [:Type-Var 0]]])]
+                        (f 1)))))))
+  )

@@ -11,3 +11,19 @@
   (is (= [:number 10]
          (e/eval [:builtin '+ [[:number 3]
                                [:number 7]]]))))
+
+(deftest eval-generic
+  (is (= [:number 42]
+         (e/eval [:apply-generic
+                  [:generic 'X [:number 42]]
+                  :bool])))
+  (is (= [:fn 'x :bool [:var 0]]
+         (e/eval [:apply-generic
+                  [:generic 'X [:fn 'x [:Type-Var 0] [:var 0]]]
+                  :bool])))
+  (is (= [:bool true]
+         (e/eval [:call
+                  [:apply-generic
+                   [:generic 'X [:fn 'x [:Type-Var 0] [:var 0]]]
+                   :bool]
+                  [:bool true]]))))
